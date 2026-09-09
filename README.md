@@ -72,4 +72,18 @@ export default defineConfig([
   },
 ])
 
+ble state updates
+New tasks are added with array spreading, and deleted tasks are removed with filter. React detects these new arrays and re-renders the UI correctly.
+
+Conditional rendering
+The app displays either an empty-state message or the task list depending on whether tasks exist. It also conditionally shows the form based on visibility.
+
+Stable list keys
+Each rendered task uses its unique id as a React key, helping React efficiently track task elements when the list changes.
+
+Event handling
+Submit and button click events trigger the appropriate functions for adding, deleting, opening, and closing the form.
+
+The completed property is included in the task type and passed through the form, but the current interface does not yet provide logic for marking tasks as complete.
+
 ```
