@@ -1,6 +1,6 @@
 import { useState } from "react";
-import AddTask from "./components/AddTask";
-import DisplayTask from "./components/DisplayTask";
+import TaskForm from "./components/TaskForm";
+import TaskList from "./components/TaskList";
 import Button from "./components/Button";
 
 export type Task = {
@@ -13,6 +13,7 @@ export type Task = {
 const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [visibility, setVisibility] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const addTask = (title: string, description: string, completed: boolean) => {
     const newTask: Task = {
@@ -23,6 +24,32 @@ const App = () => {
     };
 
     setTasks((previousTask) => [...previousTask, newTask]);
+  };
+
+  const handleEdit = (tasks: Task) => {
+    setEditingTask(tasks);
+    setVisibility(true);
+  };
+
+  const updateTask = (
+    id: number,
+    title: string,
+    description: string,
+    completed: boolean,
+  ) => {
+    setTasks((previousTask) =>
+      previousTask.map((task) =>
+        task.id === id
+          ? {
+              ...task,
+              title,
+              description,
+              completed,
+            }
+          : task,
+      ),
+    );
+    setEditingTask(null);
   };
 
   const deleteTask = (id: number) => {
@@ -63,7 +90,7 @@ const App = () => {
         </header>
 
         <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <DisplayTask tasks={tasks} onDelete={deleteTask} />
+          <TaskList tasks={tasks} onDelete={deleteTask} onEdit={handleEdit} />
 
           {visibility ? (
             <aside className="h-fit rounded-3xl bg-slate-950 p-6 text-white shadow-xl shadow-slate-900/10 lg:order-first">
@@ -73,19 +100,26 @@ const App = () => {
                     New focus
                   </p>
                   <h2 className="mt-1 font-serif text-3xl font-semibold">
-                    Add a task
+                    {editingTask ? "Edit task" : "Add a task"}
                   </h2>
                 </div>
                 <button
                   type="button"
                   aria-label="Close task form"
                   className="text-2xl leading-none text-slate-400 transition hover:text-white"
-                  onClick={() => setVisibility(false)}
+                  onClick={() => {
+                    (setVisibility(false), setEditingTask(null));
+                  }}
                 >
                   ×
                 </button>
               </div>
-              <AddTask onAddTask={addTask} />
+              <TaskForm
+                onAddTask={addTask}
+                onUpdateTask={updateTask}
+                taskToEdit={editingTask}
+                visibility={() => setVisibility(false)}
+              />
             </aside>
           ) : (
             <aside className="h-fit rounded-3xl border border-amber-200 bg-amber-50 p-6 lg:order-first">

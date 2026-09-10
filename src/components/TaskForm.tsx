@@ -1,21 +1,46 @@
 import React, { useState } from "react";
 import Button from "./Button";
+import type { Task } from "../App";
 
 type AddTaskProps = {
   onAddTask: (title: string, description: string, completed: boolean) => void;
+  onUpdateTask: (
+    id: number,
+    title: string,
+    description: string,
+    completed: boolean,
+  ) => void;
+
+  visibility: () => void;
+
+  taskToEdit: Task | null;
 };
 
-const AddTask = ({ onAddTask }: AddTaskProps) => {
+const TaskForm = ({
+  onAddTask,
+  onUpdateTask,
+  taskToEdit,
+  visibility,
+}: AddTaskProps) => {
   const [tasks, setTasks] = useState({
-    title: "",
-    description: "",
-    completed: false,
+    title: taskToEdit?.title ?? "",
+    description: taskToEdit?.description ?? "",
+    completed: taskToEdit?.completed ?? false,
   });
 
   const onHandleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
-    onAddTask(tasks.title, tasks.description, tasks.completed);
+    if (taskToEdit) {
+      onUpdateTask(
+        taskToEdit.id,
+        tasks.title,
+        tasks.description,
+        tasks.completed,
+      );
+    } else {
+      onAddTask(tasks.title, tasks.description, tasks.completed);
+    }
 
     setTasks({
       ...tasks,
@@ -23,6 +48,8 @@ const AddTask = ({ onAddTask }: AddTaskProps) => {
       description: "",
       completed: false,
     });
+
+    visibility();
   };
 
   return (
@@ -57,14 +84,23 @@ const AddTask = ({ onAddTask }: AddTaskProps) => {
           }
         />
       </label>
-      <Button
-        className="w-full bg-amber-500 text-slate-950 hover:bg-amber-400"
-        type="submit"
-      >
-        Add task
-      </Button>
+      {taskToEdit ? (
+        <Button
+          className="w-full bg-amber-500 text-slate-950 hover:bg-amber-400"
+          type="submit"
+        >
+          Update task
+        </Button>
+      ) : (
+        <Button
+          className="w-full bg-amber-500 text-slate-950 hover:bg-amber-400"
+          type="submit"
+        >
+          Add task
+        </Button>
+      )}
     </form>
   );
 };
 
-export default AddTask;
+export default TaskForm;
