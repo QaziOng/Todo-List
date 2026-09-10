@@ -1,5 +1,4 @@
 import type { Task } from "../App";
-import Button from "./Button";
 import TaskItem from "./TaskItem";
 
 type TaskListProps = {
