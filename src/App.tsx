@@ -8,6 +8,7 @@ export type Task = {
   title: string;
   description: string;
   completed: boolean;
+  image: string | null;
 };
 
 const App = () => {
@@ -15,12 +16,18 @@ const App = () => {
   const [visibility, setVisibility] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  const addTask = (title: string, description: string, completed: boolean) => {
+  const addTask = (
+    title: string,
+    description: string,
+    completed: boolean,
+    image: string | null,
+  ) => {
     const newTask: Task = {
       id: Date.now(),
       title,
       description,
       completed,
+      image,
     };
 
     setTasks((previousTask) => [...previousTask, newTask]);
@@ -36,6 +43,7 @@ const App = () => {
     title: string,
     description: string,
     completed: boolean,
+    image: string,
   ) => {
     setTasks((previousTask) =>
       previousTask.map((task) =>
@@ -45,11 +53,25 @@ const App = () => {
               title,
               description,
               completed,
+              image,
             }
           : task,
       ),
     );
     setEditingTask(null);
+  };
+
+  const handleToggleComplete = (id: number) => {
+    setTasks((previousTask) =>
+      previousTask.map((task) =>
+        task.id === id
+          ? {
+              ...task,
+              completed: !task.completed,
+            }
+          : task,
+      ),
+    );
   };
 
   const deleteTask = (id: number) => {
@@ -90,7 +112,12 @@ const App = () => {
         </header>
 
         <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <TaskList tasks={tasks} onDelete={deleteTask} onEdit={handleEdit} />
+          <TaskList
+            tasks={tasks}
+            onDelete={deleteTask}
+            onEdit={handleEdit}
+            onToggleComplete={handleToggleComplete}
+          />
 
           {visibility ? (
             <aside className="h-fit rounded-3xl bg-slate-950 p-6 text-white shadow-xl shadow-slate-900/10 lg:order-first">
@@ -108,7 +135,8 @@ const App = () => {
                   aria-label="Close task form"
                   className="text-2xl leading-none text-slate-400 transition hover:text-white"
                   onClick={() => {
-                    (setVisibility(false), setEditingTask(null));
+                    setVisibility(false);
+                    setEditingTask(null);
                   }}
                 >
                   ×
