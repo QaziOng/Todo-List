@@ -5,9 +5,15 @@ type TaskListProps = {
   tasks: Task[];
   onDelete: (id: number) => void;
   onEdit: (task: Task) => void;
+  onToggleComplete: (id: number) => void;
 };
 
-const TaskList = ({ tasks, onDelete, onEdit }: TaskListProps) => {
+const TaskList = ({
+  tasks,
+  onDelete,
+  onEdit,
+  onToggleComplete,
+}: TaskListProps) => {
   // return (
   //   <section>
   //     {tasks.length === 0 ? (
@@ -113,6 +119,7 @@ const TaskList = ({ tasks, onDelete, onEdit }: TaskListProps) => {
                 task={task}
                 onDelete={onDelete}
                 onEdit={onEdit}
+                onToggleComplete={onToggleComplete}
               />
             ))}
           </div>

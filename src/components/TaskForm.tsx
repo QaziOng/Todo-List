@@ -3,12 +3,18 @@ import Button from "./Button";
 import type { Task } from "../App";
 
 type AddTaskProps = {
-  onAddTask: (title: string, description: string, completed: boolean) => void;
+  onAddTask: (
+    title: string,
+    description: string,
+    completed: boolean,
+    image: string,
+  ) => void;
   onUpdateTask: (
     id: number,
     title: string,
     description: string,
     completed: boolean,
+    image: string,
   ) => void;
 
   visibility: () => void;
@@ -26,6 +32,7 @@ const TaskForm = ({
     title: taskToEdit?.title ?? "",
     description: taskToEdit?.description ?? "",
     completed: taskToEdit?.completed ?? false,
+    image: taskToEdit?.image ?? "",
   });
 
   const onHandleSubmit = (event: React.FormEvent) => {
@@ -37,9 +44,10 @@ const TaskForm = ({
         tasks.title,
         tasks.description,
         tasks.completed,
+        tasks.image,
       );
     } else {
-      onAddTask(tasks.title, tasks.description, tasks.completed);
+      onAddTask(tasks.title, tasks.description, tasks.completed, tasks.image);
     }
 
     setTasks({
@@ -47,9 +55,23 @@ const TaskForm = ({
       title: "",
       description: "",
       completed: false,
+      image: "",
     });
 
     visibility();
+  };
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+
+      setTasks({
+        ...tasks,
+        image: imageUrl,
+      });
+    }
   };
 
   return (
@@ -83,6 +105,9 @@ const TaskForm = ({
             })
           }
         />
+      </label>
+      <label className="block text-sm font-semibold text-slate-300">
+        <input type="file" accept="image/*" onChange={handleImageChange} />
       </label>
       {taskToEdit ? (
         <Button
