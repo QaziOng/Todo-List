@@ -8,9 +8,33 @@ type SignupFormProps = {
 const signupForm = ({ onShowLogin }: SignupFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError("");
+    setMessage("");
+
+    try {
+      const response = await fetch("http://localhost:3000/api/v1/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message ?? "Signup failed!");
+      }
+
+      setMessage("Account created successfully. You can now log in.");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Could not connect to server",
+      );
+    }
   };
 
   return (

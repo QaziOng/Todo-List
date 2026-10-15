@@ -11,10 +11,13 @@ export type Task = {
   image: string | null;
 };
 
+type screen = "login" | "signup" | "tasks";
+
 const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [visibility, setVisibility] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [screen, setScreen] = useState<screen>("login");
 
   const addTask = (
     title: string,
