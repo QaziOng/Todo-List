@@ -3,9 +3,10 @@ import Button from "../Button";
 
 type LoginFormProps = {
   onShowSignup: () => void;
+  onLoginSuccess: () => void;
 };
 
-const LoginForm = ({ onShowSignup }: LoginFormProps) => {
+const LoginForm = ({ onShowSignup, onLoginSuccess }: LoginFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -19,6 +20,7 @@ const LoginForm = ({ onShowSignup }: LoginFormProps) => {
     try {
       const response = await fetch("http://localhost:3000/api/v1/auth/login", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
@@ -30,6 +32,7 @@ const LoginForm = ({ onShowSignup }: LoginFormProps) => {
       }
 
       setMessage("Account logged in Successfully");
+      onLoginSuccess();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Could not connect to server",
@@ -44,6 +47,16 @@ const LoginForm = ({ onShowSignup }: LoginFormProps) => {
         className="mx-auto max-w-md space-y-5 rounded-3xl bg-white p-8 shadow-lg"
       >
         <h1 className="font-serif text-3xl font-semibold">Welcome Back</h1>
+        {error && (
+          <p role="alert" className="text-sm text-red-700">
+            {error}
+          </p>
+        )}
+        {message && (
+          <p role="status" className="text-sm text-teal-700">
+            {message}
+          </p>
+        )}
         <label className="block text-sm font-semibold">
           Email
           <input

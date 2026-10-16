@@ -5,7 +5,7 @@ type SignupFormProps = {
   onShowLogin: () => void;
 };
 
-const signupForm = ({ onShowLogin }: SignupFormProps) => {
+const SignupForm = ({ onShowLogin }: SignupFormProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -44,6 +44,16 @@ const signupForm = ({ onShowLogin }: SignupFormProps) => {
         className="mx-auto max-w-md space-y-5 rounded-3xl bg-white p-8 shadow-lg"
       >
         <h1 className="font-serif text-3xl font-semibold">Welcome</h1>
+        {error && (
+          <p role="alert" className="text-sm text-red-700">
+            {error}
+          </p>
+        )}
+        {message && (
+          <p role="status" className="text-sm text-teal-700">
+            {message}
+          </p>
+        )}
         <label className="block text-sm font-semibold">
           Email
           <input
@@ -80,4 +90,4 @@ const signupForm = ({ onShowLogin }: SignupFormProps) => {
   );
 };
 
-export default signupForm;
+export default SignupForm;
