@@ -1,7 +1,9 @@
-import { useState } from "react";
-import TaskForm from "./components/TaskForm";
-import TaskList from "./components/TaskList";
-import Button from "./components/Button";
+import { useEffect, useState } from "react";
+import TaskForm from "./components/TaskForm.tsx";
+import TaskList from "./components/TaskList.tsx";
+import Button from "./components/Button.tsx";
+import LoginForm from "./components/login/loginForm.tsx";
+import SignupForm from "./components/signup/singupForm.tsx";
 
 export type Task = {
   id: number;
@@ -11,13 +13,49 @@ export type Task = {
   image: string | null;
 };
 
-type screen = "login" | "signup" | "tasks";
+type screen = "login" | "signup" | "tasks" | "checking" | "check-error";
 
 const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [visibility, setVisibility] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [screen, setScreen] = useState<screen>("login");
+  const [screen, setScreen] = useState<screen>("checking");
+  const [authCheckError, setAuthCheckError] = useState("");
+  const [logoutError, setLogoutError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const checkSession = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/v1/auth/me", {
+          credentials: "include",
+        });
+
+        if (cancelled) return;
+
+        if (response.ok) {
+          setScreen("tasks");
+        } else if (response.status === 401) {
+          setScreen("login");
+        } else {
+          setAuthCheckError("Could not check your login. Please try again");
+          setScreen("check-error");
+        }
+      } catch {
+        if (!cancelled) {
+          setAuthCheckError("Could not connect to the server.");
+          setScreen("check-error");
+        }
+      }
+    };
+
+    void checkSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const addTask = (
     title: string,
@@ -81,6 +119,56 @@ const App = () => {
     setTasks((previousTask) => previousTask.filter((task) => task.id !== id));
   };
 
+  const handleLogout = async () => {
+    setLogoutError("");
+
+    try {
+      const response = await fetch("http://localhost:3000/api/v1/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Logout failed. Please try again.");
+      }
+
+      setScreen("login");
+    } catch (error) {
+      setLogoutError(
+        error instanceof Error
+          ? error.message
+          : "Could not connect to the server.",
+      );
+    }
+  };
+
+  if (screen === "checking") {
+    return <main className="p-8">Checking your session...</main>;
+  }
+
+  if (screen === "check-error") {
+    return (
+      <main>
+        {authCheckError}
+        <Button type="button" onClick={() => window.location.reload()}>
+          Try again
+        </Button>
+      </main>
+    );
+  }
+
+  if (screen === "login") {
+    return (
+      <LoginForm
+        onShowSignup={() => setScreen("signup")}
+        onLoginSuccess={() => setScreen("tasks")}
+      />
+    );
+  }
+  if (screen === "signup") {
+    return <SignupForm onShowLogin={() => setScreen("login")} />;
+  }
+
   return (
     <main className="min-h-screen bg-[#f5f7f2] px-4 py-8 text-slate-900 sm:px-8 lg:px-12">
       <div className="mx-auto max-w-6xl">
@@ -111,8 +199,20 @@ const App = () => {
             >
               + New task
             </Button>
+            <Button
+              className="bg-slate-200 text-slate-900 hover:bg-slate-300"
+              onClick={handleLogout}
+            >
+              Log out
+            </Button>
           </div>
         </header>
+
+        {logoutError && (
+          <p role="alert" className="mb-6 text-sm text-red-700">
+            {logoutError}
+          </p>
+        )}
 
         <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
           <TaskList
