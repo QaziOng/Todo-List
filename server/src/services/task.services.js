@@ -1,8 +1,17 @@
-import Task from "../models/task.model";
 import TaskRepository from "../repositories/task.repository.js";
 import { findUserById } from "../repositories/user.repository.js";
 
 const TaskRepo = new TaskRepository();
+
+// Find all Tasks by UserId
+export async function getTasksByUserId(user_id) {
+  const checkUser = await findUserById(user_id);
+  if (!checkUser) {
+    return null;
+  }
+
+  return await TaskRepo.findTasksByUserId(user_id);
+}
 
 // Create Task by UserID
 export async function createTaskById(user_id, title, description, image_url) {
@@ -35,7 +44,7 @@ export async function updateTaskById(
   image_url,
   completed,
 ) {
-  if (!user_id || !title) {
+  if (!id || !user_id || !title) {
     return null;
   }
 
@@ -59,7 +68,7 @@ export async function updateTaskById(
 
 // Delete Tasks by ID
 export async function deleteTaskById(id, user_id) {
-  if (!user_id) {
+  if (!id || !user_id) {
     return null;
   }
 
@@ -69,7 +78,7 @@ export async function deleteTaskById(id, user_id) {
     return null;
   }
 
-  const deleteTask = await TaskRepo.deleteTask({ id, user_id });
+  const deleteTask = await TaskRepo.deleteTask(id, user_id);
 
   return deleteTask;
 }

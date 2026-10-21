@@ -1,5 +1,5 @@
-import pool from "../config/database";
-import Task from "../models/task.model";
+import pool from "../config/database.js";
+import Task from "../models/task.model.js";
 
 export default class TaskRepository {
   // Get a Task by its ID
@@ -29,7 +29,7 @@ export default class TaskRepository {
       [user_id],
     );
 
-    return rows.length ? rows.map((row) => new Task(row)) : null;
+    return rows.map((row) => new Task(row));
   }
 
   // Create a New Task
@@ -61,11 +61,12 @@ export default class TaskRepository {
             SET
                 title = ?,
                 description = ?,
-                image_url = ?
+                image_url = ?,
+                completed = ?
             WHERE
                 id = ? AND user_id = ?
         `,
-      [id, user_id, title, description, image_url, completed],
+      [title, description, image_url, completed, id, user_id],
     );
 
     return result.affectedRows > 0 ? id : null;
