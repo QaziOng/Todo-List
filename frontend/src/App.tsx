@@ -13,6 +13,14 @@ export type Task = {
   image: string | null;
 };
 
+type ServerTask = {
+  id: number;
+  title: string;
+  description: string | null;
+  completed: boolean | 0 | 1;
+  image_url: string | null;
+};
+
 type screen = "login" | "signup" | "tasks" | "checking" | "check-error";
 
 const App = () => {
@@ -22,6 +30,7 @@ const App = () => {
   const [screen, setScreen] = useState<screen>("checking");
   const [authCheckError, setAuthCheckError] = useState("");
   const [logoutError, setLogoutError] = useState("");
+  const [taskError, setTaskError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -57,14 +66,60 @@ const App = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (screen !== "tasks") return;
+    let cancelled = false;
+
+    setTaskError("");
+
+    const fetchTasks = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/v1/tasks", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (cancelled) return;
+
+        if (!response.ok) {
+          throw new Error("Failed to pull task database from the server!");
+        }
+        const data: { message: string; tasks: ServerTask[] } =
+          await response.json();
+        setTasks(
+          data.tasks.map((task) => ({
+            id: task.id,
+            title: task.title,
+            description: task.description ?? "",
+            completed: Boolean(task.completed),
+            image: task.image_url,
+          })),
+        );
+      } catch (err) {
+        if (!cancelled) {
+          setTaskError(
+            err instanceof Error ? err.message : "Could not load Tasks.",
+          );
+        }
+      }
+    };
+
+    void fetchTasks();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [screen]);
+
   const addTask = (
+    id: number,
     title: string,
     description: string,
     completed: boolean,
     image: string | null,
   ) => {
     const newTask: Task = {
-      id: Date.now(),
+      id,
       title,
       description,
       completed,
@@ -102,21 +157,74 @@ const App = () => {
     setEditingTask(null);
   };
 
-  const handleToggleComplete = (id: number) => {
-    setTasks((previousTask) =>
-      previousTask.map((task) =>
-        task.id === id
-          ? {
-              ...task,
-              completed: !task.completed,
-            }
-          : task,
-      ),
-    );
+  const handleToggleComplete = async (id: number) => {
+    setTaskError("");
+
+    const task = tasks.find((task) => task.id === id);
+    if (!task) {
+      setTaskError("Could not find that task.");
+      return;
+    }
+
+    const completed = !task.completed;
+
+    try {
+      const response = await fetch(`http://localhost:3000/api/v1/tasks/${id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: task.title,
+          description: task.description,
+          completed,
+          image_url: task.image,
+        }),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message ?? "Updating task failed.");
+      }
+
+      setTasks((previousTask) =>
+        previousTask.map((currentTask) =>
+          currentTask.id === id
+            ? {
+                ...currentTask,
+                completed,
+              }
+            : currentTask,
+        ),
+      );
+    } catch (err) {
+      setTaskError(
+        err instanceof Error ? err.message : "Could not connect to server.",
+      );
+    }
   };
 
-  const deleteTask = (id: number) => {
-    setTasks((previousTask) => previousTask.filter((task) => task.id !== id));
+  const deleteTask = async (id: number) => {
+    setTaskError("");
+
+    try {
+      const response = await fetch(`http://localhost:3000/api/v1/tasks/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message ?? "Task deletion failed.");
+      }
+
+      setTasks((previousTasks) =>
+        previousTasks.filter((task) => task.id !== id),
+      );
+    } catch (err) {
+      setTaskError(
+        err instanceof Error ? err.message : "Could not connect to server.",
+      );
+    }
   };
 
   const handleLogout = async () => {
@@ -178,7 +286,7 @@ const App = () => {
               Personal workspace
             </p>
             <h1 className="font-serif text-5xl font-semibold tracking-tight text-slate-950 sm:text-6xl">
-              Make room for <span className="text-amber-600">progress.</span>
+              Make Room For <span className="text-amber-600">Progress.</span>
             </h1>
             <p className="mt-4 max-w-xl text-lg leading-8 text-slate-600">
               Keep the important things visible, manageable, and moving forward.
@@ -211,6 +319,15 @@ const App = () => {
         {logoutError && (
           <p role="alert" className="mb-6 text-sm text-red-700">
             {logoutError}
+          </p>
+        )}
+
+        {taskError && (
+          <p
+            role="alert"
+            className="mb-6 p-4 rounded-xl bg-red-50 text-sm text-red-700 border border-red-200"
+          >
+            {taskError}
           </p>
         )}
 
@@ -249,7 +366,10 @@ const App = () => {
                 onAddTask={addTask}
                 onUpdateTask={updateTask}
                 taskToEdit={editingTask}
-                visibility={() => setVisibility(false)}
+                visibility={() => {
+                  setVisibility(false);
+                  setEditingTask(null);
+                }}
               />
             </aside>
           ) : (
