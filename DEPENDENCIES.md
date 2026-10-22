@@ -70,7 +70,7 @@ Run these install commands from `server/`. These are all runtime dependencies.
 | `express-rate-limit` | Limits requests to the versioned API to 200 per 15-minute window; configured in `server/src/app.js`. |
 | `helmet` | Adds security-related HTTP response headers; used in `server/src/app.js`. |
 | `dotenv` | Loads configuration from `server/.env`; used by `server/src/server.js` and `server/src/config/database.js`. |
-| `mysql2` | Connects to MySQL using a promise-based connection pool; used by `server/src/config/database.js` and repositories. |
+| `mysql2` | MySQL driver used by Sequelize to connect to the database; configured through `server/src/config/database.js`. |
 | `bcrypt` | Hashes passwords during signup and compares hashes during login; used in `server/src/services/auth.services.js`. |
 | `zod` | Defines and validates API request data such as login and signup; used in `server/src/validators/` and validation middleware. |
 

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import pool from "../config/database.js";
+import sequelize from "../config/database.js";
 
 const router = Router();
 
@@ -21,10 +21,10 @@ router.get("/db", async (req, res) => {
   }
 
   try {
-    const [rows] = await pool.query("SELECT DATABASE() AS database_name");
+    await sequelize.authenticate();
     return res.json({
       status: "ok",
-      database: rows[0].database_name,
+      database: sequelize.config.database,
     });
   } catch (error) {
     console.error("Database health check failed:", error);
