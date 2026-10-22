@@ -2,6 +2,7 @@ import { signupSchema } from "../validators/auth.validator.js";
 import { signupUser, loginUser } from "../services/auth.services.js";
 import { findUserById } from "../repositories/user.repository.js";
 import AppError from "../utils/app-error.js";
+import { UniqueConstraintError } from "sequelize";
 
 export async function signup(req, res, next) {
   try {
@@ -13,7 +14,7 @@ export async function signup(req, res, next) {
       user,
     });
   } catch (error) {
-    if (error.code === "ER_DUP_ENTRY") {
+    if (error instanceof UniqueConstraintError) {
       return res.status(409).json({
         message: "An account with this email already exists",
       });
