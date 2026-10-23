@@ -1,0 +1,1011 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A project-specific, file-by-file learning guide for migrating the Todo List app from MySQL and Sequelize to MongoDB and Mongoose.">
+    <title>Learning the MySQL to MongoDB Migration</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #172033;
+        --muted: #536174;
+        --paper: #f5f7fb;
+        --panel: #fff;
+        --line: #dbe2ec;
+        --accent: #087f76;
+        --accent-light: #e6f6f3;
+        --code: #101827;
+        --code-ink: #e6edf7;
+        --warning: #fff4dc;
+        --warning-line: #e7a928;
+        --blue-light: #edf4ff;
+        --shadow: 0 12px 30px rgb(21 35 55 / 7%);
+      }
+
+      * { box-sizing: border-box; }
+
+      html { scroll-behavior: smooth; }
+
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font: 16px/1.68 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      a { color: #066b67; }
+
+      .hero {
+        padding: 58px 24px 48px;
+        background: linear-gradient(135deg, #102b3c, #087f76);
+        color: #fff;
+      }
+
+      .hero-inner, main, footer {
+        width: min(1120px, calc(100% - 40px));
+        margin-inline: auto;
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        color: #b7f1e7;
+        font-size: .78rem;
+        font-weight: 800;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        max-width: 850px;
+        margin: 0;
+        font-size: clamp(2.15rem, 5vw, 3.8rem);
+        line-height: 1.08;
+        letter-spacing: -.04em;
+      }
+
+      .hero p {
+        max-width: 780px;
+        margin: 20px 0 0;
+        color: #e3f4f2;
+        font-size: 1.08rem;
+      }
+
+      main { padding: 30px 0 70px; }
+
+      .callout, .card, section {
+        margin: 20px 0;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+      }
+
+      .callout {
+        border-left: 5px solid var(--accent);
+        background: var(--accent-light);
+      }
+
+      .warning {
+        border-left-color: var(--warning-line);
+        background: var(--warning);
+      }
+
+      .toc {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 8px 22px;
+        padding-left: 22px;
+      }
+
+      h2 {
+        margin: 0 0 14px;
+        font-size: clamp(1.55rem, 3vw, 2.1rem);
+        line-height: 1.2;
+        letter-spacing: -.025em;
+      }
+
+      h3 {
+        margin: 26px 0 8px;
+        font-size: 1.2rem;
+        line-height: 1.35;
+      }
+
+      h4 {
+        margin: 20px 0 6px;
+        font-size: 1.02rem;
+      }
+
+      p { margin: 10px 0; }
+      li + li { margin-top: 6px; }
+      code, kbd { font-family: Consolas, "SFMono-Regular", Menlo, monospace; }
+
+      :not(pre) > code {
+        padding: .12em .36em;
+        border: 1px solid #d9e1eb;
+        border-radius: 5px;
+        background: #f0f3f8;
+        font-size: .9em;
+        overflow-wrap: anywhere;
+      }
+
+      pre {
+        max-width: 100%;
+        margin: 12px 0 18px;
+        padding: 18px;
+        overflow: auto;
+        border: 1px solid #26364d;
+        border-radius: 12px;
+        background: var(--code);
+        color: var(--code-ink);
+        font: .88rem/1.58 Consolas, "SFMono-Regular", Menlo, monospace;
+        tab-size: 2;
+      }
+
+      pre code { font: inherit; }
+
+      .file {
+        padding: 3px 8px;
+        border-radius: 6px;
+        background: var(--blue-light);
+        color: #194e84;
+        font-family: Consolas, "SFMono-Regular", Menlo, monospace;
+        font-size: .91em;
+        overflow-wrap: anywhere;
+      }
+
+      .table-wrap { overflow-x: auto; }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0;
+        font-size: .94rem;
+      }
+
+      th, td {
+        padding: 11px 12px;
+        border: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th { background: #eef3f7; }
+      .tag { color: var(--accent); font-weight: 800; }
+      .small { color: var(--muted); font-size: .93rem; }
+
+      footer {
+        padding: 0 0 40px;
+        color: var(--muted);
+        font-size: .9rem;
+      }
+
+      @media (max-width: 650px) {
+        .hero { padding: 42px 20px 36px; }
+        .hero-inner, main, footer { width: min(100% - 24px, 1120px); }
+        .card, section, .callout { padding: 18px; }
+        pre { padding: 14px; font-size: .81rem; }
+      }
+
+      @media print {
+        body { background: #fff; font-size: 11pt; }
+        .hero { padding: 25px; print-color-adjust: exact; }
+        main { width: 100%; padding-top: 10px; }
+        .card, section, .callout { box-shadow: none; break-inside: avoid; }
+        pre { white-space: pre-wrap; overflow-wrap: anywhere; print-color-adjust: exact; }
+        a { color: inherit; text-decoration: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero-inner">
+        <p class="eyebrow">Project-specific learning guide</p>
+        <h1>How this app could move from MySQL to MongoDB</h1>
+        <p>
+          A detailed tour of what changes in this Todo List project, why those
+          changes are needed, and how MySQL + Sequelize concepts translate to
+          MongoDB + Mongoose. This page describes a migration; it does not
+          perform one.
+        </p>
+      </div>
+    </header>
+
+    <main>
+      <aside class="callout">
+        <strong>Nothing in the application has been migrated.</strong>
+        This is a learning document only. The existing API still uses MySQL
+        through Sequelize. Make a backup and work on a branch before carrying
+        out any real migration.
+      </aside>
+
+      <section aria-labelledby="contents">
+        <h2 id="contents">Contents</h2>
+        <ol class="toc">
+          <li><a href="#mental-model">The two database layers</a></li>
+          <li><a href="#current-design">How this app works today</a></li>
+          <li><a href="#migration-map">Complete file-change map</a></li>
+          <li><a href="#install-config">Dependencies and connection</a></li>
+          <li><a href="#schemas">Mongoose schemas</a></li>
+          <li><a href="#repositories">Repository rewrites</a></li>
+          <li><a href="#ids">IDs, validation, and API responses</a></li>
+          <li><a href="#other-server-files">Other server files</a></li>
+          <li><a href="#frontend-files">Frontend files</a></li>
+          <li><a href="#migration-data">Moving existing data</a></li>
+          <li><a href="#sessions-security">Sessions and security</a></li>
+          <li><a href="#test-plan">Order of work and verification</a></li>
+        </ol>
+      </section>
+
+      <section id="mental-model">
+        <h2>1. The two database layers</h2>
+        <p>
+          There are two related but different replacements. <strong>MongoDB
+          replaces MySQL</strong>, the database server that stores the
+          application data. <strong>Mongoose replaces Sequelize</strong>, the
+          Node.js library the API uses to describe data and communicate with
+          the database. Sequelize is an ORM for relational databases; Mongoose
+          is an ODM (object-document mapper) for MongoDB. MongoDB's official
+          Node.js driver is another option, but this guide uses Mongoose
+          because its schemas and model API provide a familiar structured
+          layer.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Current stack</th><th>Possible replacement</th><th>Role in this app</th></tr></thead>
+            <tbody>
+              <tr><td>MySQL</td><td>MongoDB</td><td>The database process/service storing users and tasks.</td></tr>
+              <tr><td>mysql2</td><td>Bundled dependency used by Mongoose</td><td>mysql2 is the MySQL network driver. Mongoose communicates with MongoDB and does not use mysql2.</td></tr>
+              <tr><td>Sequelize</td><td>Mongoose</td><td>JavaScript APIs for models, validation, queries, and database operations.</td></tr>
+              <tr><td>SQL tables and rows</td><td>Collections and documents</td><td>Relational records become BSON documents in collections.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          A simplified picture of the current app is
+          <code>Express route → controller → service → repository → Sequelize model → MySQL</code>.
+          The same layers can remain after migration:
+          <code>Express route → controller → service → repository → Mongoose model → MongoDB</code>.
+          The repository/model/database implementation changes; the API and
+          much of the application behavior need not.
+        </p>
+        <div class="callout">
+          <strong>SQL concepts versus MongoDB concepts:</strong> MySQL stores
+          rows in tables and commonly uses integer primary keys and foreign
+          keys. MongoDB stores documents in collections and commonly uses
+          ObjectIds. Mongoose can describe a reference from one document to
+          another, but MongoDB does not enforce that reference as a relational
+          foreign key.
+        </div>
+      </section>
+
+      <section id="current-design">
+        <h2>2. How this project works today</h2>
+        <p>The server has two Sequelize models:</p>
+        <ul>
+          <li><code>users</code>: an auto-increment integer <code>id</code>, a unique email, a password hash, and a creation timestamp.</li>
+          <li><code>tasks</code>: an auto-increment integer <code>id</code>, integer <code>user_id</code>, title, optional description/image URL, completion flag, and timestamps.</li>
+        </ul>
+        <p>
+          A task belongs to a user by its <code>user_id</code>. The API stores
+          the signed-in user's ID in <code>req.session.userId</code>. The task
+          service/repository filters tasks by both task ID and user ID during
+          updates/deletes, so each user operates only on their own tasks.
+        </p>
+        <p>
+          The frontend expects task objects to have an <code>id</code> property
+          and currently types it as a number. The SQL column and JSON field
+          names use snake_case (such as <code>image_url</code>), whereas the
+          default timestamp fields in Sequelize are configured as
+          <code>created_at</code> and <code>updated_at</code>.
+        </p>
+        <p>
+          These contracts are why a database swap is more than changing a
+          connection string. The storage model, query operations, database
+          error types, task ID format, and timestamp naming must all agree
+          across the backend and frontend.
+        </p>
+      </section>
+
+      <section id="migration-map">
+        <h2>3. Complete file-change map</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>File</th><th>Change level</th><th>Reason</th></tr></thead>
+            <tbody>
+              <tr><td><span class="file">server/package.json</span></td><td>Change</td><td>Remove Sequelize/mysql2; add Mongoose.</td></tr>
+              <tr><td><span class="file">server/package-lock.json</span></td><td>Regenerate</td><td>npm records the dependency graph; update it through npm, not manual editing.</td></tr>
+              <tr><td><span class="file">server/.env.example</span></td><td>Change</td><td>Replace MySQL host/port/user/password/name settings with <code>MONGODB_URI</code>.</td></tr>
+              <tr><td><span class="file">server/src/config/database.js</span></td><td>Replace implementation</td><td>Create and export a Mongoose connection helper.</td></tr>
+              <tr><td><span class="file">server/src/server.js</span></td><td>Change</td><td>Wait for MongoDB before accepting requests.</td></tr>
+              <tr><td><span class="file">server/src/models/user.model.js</span></td><td>Replace implementation</td><td>Define a Mongoose user schema/model and unique email index.</td></tr>
+              <tr><td><span class="file">server/src/models/task.model.js</span></td><td>Replace implementation</td><td>Define a task schema/model with an ObjectId user reference.</td></tr>
+              <tr><td><span class="file">server/src/repositories/user.repository.js</span></td><td>Rewrite queries</td><td>Replace Sequelize query methods; keep password hash private in public user results.</td></tr>
+              <tr><td><span class="file">server/src/repositories/task.repository.js</span></td><td>Rewrite queries</td><td>Use MongoDB filters, updates, deletes, and sort field; scope by owner.</td></tr>
+              <tr><td><span class="file">server/src/controllers/auth.controller.js</span></td><td>Change</td><td>Detect MongoDB duplicate-key error code instead of Sequelize's error class.</td></tr>
+              <tr><td><span class="file">server/src/routes/health.routes.js</span></td><td>Change</td><td>Check Mongoose connection readiness and use MongoDB configuration/messages.</td></tr>
+              <tr><td><span class="file">server/src/validators/task.validator.js</span></td><td>Extend</td><td>Define validation for a MongoDB ObjectId in a task route parameter.</td></tr>
+              <tr><td><span class="file">server/src/routes/task.routes.js</span></td><td>Change</td><td>Apply ID validation to update/delete routes.</td></tr>
+              <tr><td><span class="file">server/src/controllers/task.controller.js</span></td><td>Review</td><td>Route parameters are strings; consider correct 400/404 errors for invalid/not-found IDs.</td></tr>
+              <tr><td><span class="file">server/src/services/task.services.js</span></td><td>Review</td><td>Pass string ObjectIds through; preserve owner checks and service behavior.</td></tr>
+              <tr><td><span class="file">server/src/services/auth.services.js</span></td><td>Usually no database rewrite</td><td>It calls repositories and bcrypt; check the returned user shape and string ID.</td></tr>
+              <tr><td><span class="file">server/src/middleware/authenticate.js</span></td><td>Review</td><td>Session user ID becomes a string ObjectId; handle stale/invalid IDs as unauthenticated.</td></tr>
+              <tr><td><span class="file">server/src/app.js</span></td><td>Optional change</td><td>Only if adding a persistent MongoDB-backed session store. The app-data migration alone does not require it.</td></tr>
+              <tr><td><span class="file">frontend/src/App.tsx</span></td><td>Change</td><td>Change task/server task ID types and callback ID types from number to string.</td></tr>
+              <tr><td><span class="file">frontend/src/components/TaskForm.tsx</span></td><td>Change</td><td>Use string IDs in callbacks and task URLs/responses.</td></tr>
+              <tr><td><span class="file">frontend/src/components/TaskItem.tsx</span></td><td>Change</td><td>Use string IDs in delete/toggle callback types.</td></tr>
+              <tr><td><span class="file">frontend/src/components/TaskList.tsx</span></td><td>Change</td><td>Use string IDs in delete/toggle callback types.</td></tr>
+              <tr><td><span class="file">DEPENDENCIES.md</span></td><td>Update documentation</td><td>Document MongoDB, MONGODB_URI, and Mongoose rather than MySQL and Sequelize.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small">
+          The frontend URL paths, routes, request payload field names, and
+          authentication flow can stay the same if the API continues to return
+          <code>id</code> as a string. No SQL query appears in the frontend.
+        </p>
+      </section>
+
+      <section id="install-config">
+        <h2>4. Dependencies and database connection</h2>
+
+        <h3><span class="file">server/package.json</span> and <span class="file">server/package-lock.json</span></h3>
+        <p>
+          From the <code>server</code> folder, use npm to remove the SQL
+          packages and install Mongoose:
+        </p>
+        <pre><code>npm uninstall sequelize mysql2
+npm install mongoose</code></pre>
+        <p>
+          Keep dependencies such as Express, bcrypt, dotenv, and
+          express-session. npm edits <code>package.json</code> and regenerates
+          <code>package-lock.json</code>. Review the diff to make sure it
+          changes only the intended dependency graph.
+        </p>
+
+        <h3><span class="file">server/.env.example</span></h3>
+        <p>
+          Remove the MySQL settings (<code>DB_HOST</code>, <code>DB_PORT</code>,
+          <code>DB_USER</code>, <code>DB_PASSWORD</code>, and
+          <code>DB_NAME</code>) and add one MongoDB URI:
+        </p>
+        <pre><code>NODE_ENV=development
+PORT=3000
+CLIENT_ORIGIN=http://localhost:5173
+
+MONGODB_URI=mongodb://127.0.0.1:27017/task_app
+
+SESSION_SECRET=replace_with_a_long_random_secret</code></pre>
+        <p>
+          That URI is for a local MongoDB server. A hosted MongoDB provider
+          supplies a different URI. Put real credentials only in the local,
+          ignored <code>server/.env</code>, encode special characters in URI
+          credentials, and never commit secrets.
+        </p>
+
+        <h3><span class="file">server/src/config/database.js</span></h3>
+        <p>
+          This file currently constructs and exports a Sequelize instance.
+          Replace it with a function that validates configuration and opens
+          the Mongoose connection:
+        </p>
+        <pre><code>import mongoose from "mongoose";
+
+export default async function connectDatabase() {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    throw new Error("MONGODB_URI must be added in server/.env");
+  }
+
+  await mongoose.connect(uri);
+  return mongoose.connection;
+}</code></pre>
+        <p>
+          A connection function makes startup order explicit and avoids
+          opening a request listener before the database is ready. The
+          returned connection can also be inspected by the health route.
+        </p>
+
+        <h3><span class="file">server/src/server.js</span></h3>
+        <p>
+          Replace the Sequelize <code>authenticate()</code> call with the
+          connection helper. The server should fail visibly rather than
+          pretending to start when the database cannot be reached:
+        </p>
+        <pre><code>import "dotenv/config";
+import app from "./app.js";
+import connectDatabase from "./config/database.js";
+
+const port = Number(process.env.PORT || 3000);
+
+async function startServer() {
+  try {
+    await connectDatabase();
+    app.listen(port, () =&gt; {
+      console.log(`Task App API listening at http://localhost:${port}`);
+    });
+  } catch (error) {
+    console.error("Failed to start the Application: ", error);
+    process.exit(1);
+  }
+}
+
+startServer();</code></pre>
+        <p>
+          The current code already loads dotenv and listens only after
+          authenticating, so this preserves the startup behavior while
+          changing the database library.
+        </p>
+      </section>
+
+      <section id="schemas">
+        <h2>5. Replace Sequelize models with Mongoose schemas</h2>
+        <p>
+          A Sequelize model maps fields to SQL columns and a table. A Mongoose
+          schema describes document fields and a Mongoose model provides
+          operations on a MongoDB collection. MongoDB automatically gives each
+          document an <code>_id</code>, usually an ObjectId; do not define an
+          auto-incrementing integer <code>id</code>.
+        </p>
+
+        <h3><span class="file">server/src/models/user.model.js</span></h3>
+        <p>
+          This schema keeps the project's existing field names and timestamp
+          behavior. The email is normalized to lowercase and trimmed; the
+          existing request validator also lowercases it.
+        </p>
+        <pre><code>import mongoose from "mongoose";
+
+const userSchema = new mongoose.Schema(
+  {
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      maxlength: 255,
+    },
+    password_hash: {
+      type: String,
+      required: true,
+    },
+  },
+  {
+    collection: "users",
+    timestamps: { createdAt: true, updatedAt: false },
+  },
+);
+
+export default mongoose.model("User", userSchema);</code></pre>
+        <p>
+          <code>unique: true</code> requests a unique MongoDB index; it is not
+          itself a Mongoose validation rule. The index must exist in the
+          database for duplicate emails to be rejected. Confirm index creation
+          as part of deployment and handle MongoDB's duplicate-key error.
+        </p>
+
+        <h3><span class="file">server/src/models/task.model.js</span></h3>
+        <p>
+          The task's owner becomes an ObjectId reference to a user. This
+          describes the relationship for Mongoose; it does not create an SQL
+          foreign-key constraint. The application must keep checking ownership
+          in queries.
+        </p>
+        <pre><code>import mongoose from "mongoose";
+
+const taskSchema = new mongoose.Schema(
+  {
+    user_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    title: { type: String, required: true, maxlength: 72 },
+    description: { type: String, default: null },
+    completed: { type: Boolean, default: false },
+    image_url: { type: String, default: null },
+  },
+  {
+    collection: "tasks",
+    timestamps: true,
+  },
+);
+
+export default mongoose.model("Task", taskSchema);</code></pre>
+        <p>
+          Mongoose timestamps are named <code>createdAt</code> and
+          <code>updatedAt</code> by default. The current Sequelize models use
+          underscored timestamp names. The repository sort and any migration
+          script must use whichever naming choice the new schema configures.
+          The example query later sorts by <code>createdAt</code>.
+        </p>
+      </section>
+
+      <section id="repositories">
+        <h2>6. Rewrite repository operations</h2>
+        <p>
+          Repositories isolate database-specific details from services and
+          controllers. SQL-style Sequelize methods such as
+          <code>findAll</code>, <code>where</code>, <code>update</code>, and
+          <code>destroy</code> need to become Mongoose queries. Keep the same
+          exported functions and class methods where practical so most
+          services do not need a rewrite.
+        </p>
+
+        <h3><span class="file">server/src/repositories/user.repository.js</span></h3>
+        <p>
+          Login needs a user document containing <code>password_hash</code>,
+          while normal authentication responses must not expose that hash.
+          Keep those use cases separate:
+        </p>
+        <pre><code>import mongoose from "mongoose";
+import User from "../models/user.model.js";
+
+export async function findUserByEmail(email) {
+  // Login service needs password_hash for bcrypt.compare.
+  return User.findOne({ email });
+}
+
+export async function findUserById(id) {
+  if (!mongoose.isValidObjectId(id)) return null;
+
+  const user = await User.findById(id).select("-password_hash");
+  if (!user) return null;
+
+  return {
+    id: user._id.toString(),
+    email: user.email,
+    createdAt: user.createdAt,
+  };
+}
+
+export async function createUser(email, password_hash) {
+  const user = await User.create({ email, password_hash });
+  return {
+    id: user._id.toString(),
+    email: user.email,
+  };
+}</code></pre>
+        <p>
+          Returning <code>id</code> as a string preserves the API's property
+          name while adapting its value to MongoDB. The password hash remains
+          available only to the login service, which already uses bcrypt.
+        </p>
+
+        <h3><span class="file">server/src/repositories/task.repository.js</span></h3>
+        <p>
+          A complete class-shaped example follows. Notice that update and
+          delete filters include both the document ID and the authenticated
+          user's ID. That is an authorization boundary, not just a performance
+          detail.
+        </p>
+        <pre><code>import mongoose from "mongoose";
+import Task from "../models/task.model.js";
+
+function toApiTask(task) {
+  if (!task) return null;
+
+  const value = task.toObject();
+  const { _id, __v, ...fields } = value;
+
+  return {
+    ...fields,
+    id: _id.toString(),
+    user_id: value.user_id.toString(),
+  };
+}
+
+export default class TaskRepository {
+  async findTasksByUserId(user_id) {
+    const tasks = await Task.find({ user_id }).sort({ createdAt: -1 });
+    return tasks.map(toApiTask);
+  }
+
+  async createTask(taskData) {
+    const task = await Task.create(taskData);
+    return toApiTask(task);
+  }
+
+  async updateTask({
+    id,
+    user_id,
+    title,
+    description = null,
+    image_url = null,
+    completed = null,
+  }) {
+    if (!mongoose.isValidObjectId(id)) return null;
+
+    const task = await Task.findOneAndUpdate(
+      { _id: id, user_id },
+      { $set: { title, description, image_url, completed } },
+      { new: true, runValidators: true },
+    );
+    return toApiTask(task);
+  }
+
+  async deleteTask(id, user_id) {
+    if (!mongoose.isValidObjectId(id)) return null;
+
+    const result = await Task.deleteOne({ _id: id, user_id });
+    return result.deletedCount &gt; 0 ? id : null;
+  }
+}</code></pre>
+        <p>
+          <code>findOneAndUpdate</code> returns the updated task when
+          <code>{ new: true }</code> is set. <code>runValidators: true</code>
+          asks Mongoose to run applicable schema validators for the update.
+          <code>deleteOne</code> reports a deleted count rather than returning
+          the deleted row, so the example returns the ID when deletion
+          succeeded, matching the existing repository's success/null pattern.
+        </p>
+        <p>
+          This approach returns a task object after update, while the SQL
+          version returns an ID. The current task controller sends the
+          repository result in its response. If preserving that exact response
+          shape matters to external API clients, deliberately keep returning
+          the ID, or document and test the response-shape change.
+        </p>
+      </section>
+
+      <section id="ids">
+        <h2>7. IDs, validation, and the API contract</h2>
+        <p>
+          MongoDB ObjectIds are commonly represented in URLs and JSON as
+          24-character hexadecimal strings, for example
+          <code>66f1a86b4a246aef77000001</code>. This is not a number. The
+          frontend must stop using numeric task ID types, and backend routes
+          should reject malformed IDs before a Mongoose query can throw a cast
+          error.
+        </p>
+
+        <h3><span class="file">server/src/validators/task.validator.js</span></h3>
+        <p>
+          Add an ObjectId schema and parameter middleware while keeping the
+          existing task body schema:
+        </p>
+        <pre><code>import { z } from "zod";
+
+export const taskSchema = z.object({
+  title: z.string().trim().min(1, "Title is required").max(72),
+  description: z.string().trim().optional().nullable(),
+  completed: z.boolean().default(false),
+  image_url: z.string().trim().url("Must enter a URL").optional().nullable(),
+});
+
+const taskIdSchema = z.string().regex(/^[a-f\\d]{24}$/i);
+
+export function validateTaskId(req, res, next) {
+  const result = taskIdSchema.safeParse(req.params.id);
+  if (!result.success) {
+    return res.status(400).json({
+      message: "Invalid task ID",
+    });
+  }
+  next();
+}</code></pre>
+        <p>
+          This middleware gives malformed IDs a clear HTTP 400 response.
+          Another valid design is a shared route-parameter validation helper.
+          Avoid silently treating every database error as “not found”; real
+          connection and query failures should still reach the error handler.
+        </p>
+
+        <h3><span class="file">server/src/routes/task.routes.js</span></h3>
+        <p>
+          Apply the new validator to both routes containing an ID, and leave
+          body validation on the update route:
+        </p>
+        <pre><code>import { validateTaskId } from "../validators/task.validator.js";
+
+router.put("/:id", validateTaskId, validate(taskSchema), updateTask);
+router.delete("/:id", validateTaskId, deleteTask);</code></pre>
+        <p>
+          Keep the existing <code>router.use(authenticate)</code> so these
+          operations still require a signed-in user. The route examples show
+          only the lines to change; retain the other imports and routes already
+          present in the file.
+        </p>
+
+        <h3>API ID conversion: keep MongoDB details behind the API</h3>
+        <p>
+          MongoDB documents use <code>_id</code>; the existing frontend reads
+          <code>task.id</code>. Convert <code>_id</code> to a string
+          <code>id</code> in the repository, as in <code>toApiTask</code>
+          above. This lets the existing routes and JSON field name stay
+          unchanged without making the UI depend on MongoDB's internal field
+          naming.
+        </p>
+
+        <h3><span class="file">server/src/controllers/auth.controller.js</span></h3>
+        <p>
+          Replace the Sequelize import of <code>UniqueConstraintError</code>.
+          MongoDB reports duplicate key/index errors with error code
+          <code>11000</code>. Keep the signup response as HTTP 409:
+        </p>
+        <pre><code>// Remove: import { UniqueConstraintError } from "sequelize";
+
+if (error &amp;&amp; typeof error === "object" &amp;&amp; error.code === 11000) {
+  return res.status(409).json({
+    message: "An account with this email already exists",
+  });
+}</code></pre>
+        <p>
+          Keep the bcrypt service and session regeneration/save logic. The
+          repository now returns a string ID from user creation, so
+          <code>req.session.userId = user.id</code> continues to work; it now
+          stores that string ObjectId rather than an integer.
+        </p>
+      </section>
+
+      <section id="other-server-files">
+        <h2>8. Other backend files to update or review</h2>
+
+        <h3><span class="file">server/src/routes/health.routes.js</span></h3>
+        <p>
+          The route currently calls Sequelize's <code>authenticate()</code>
+          and checks for three MySQL settings. Replace that with a check for
+          <code>MONGODB_URI</code> and Mongoose connection readiness. Do not
+          return the URI or credentials:
+        </p>
+        <pre><code>import { Router } from "express";
+import mongoose from "mongoose";
+
+const router = Router();
+
+router.get("/", (req, res) =&gt; {
+  res.json({ status: "ok", message: "Task App API is running." });
+});
+
+router.get("/db", (req, res) =&gt; {
+  if (!process.env.MONGODB_URI) {
+    return res.status(503).json({
+      status: "error",
+      message: "Set MONGODB_URI in server/.env before checking the database.",
+    });
+  }
+
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      status: "error",
+      message: "Could not connect to MongoDB. Check the service and MONGODB_URI.",
+    });
+  }
+
+  return res.json({
+    status: "ok",
+    database: mongoose.connection.name,
+  });
+});
+
+export default router;</code></pre>
+        <p>
+          The Mongoose connection state values distinguish disconnected,
+          connecting, connected, and disconnecting states; <code>1</code>
+          means connected. If the project wants health-check failures logged,
+          add deliberate logging; do not hide unexpected errors behind a
+          success response.
+        </p>
+
+        <h3><span class="file">server/src/services/auth.services.js</span></h3>
+        <p>
+          This service hashes passwords with bcrypt and compares the hash on
+          login. Those operations are independent of SQL and should remain.
+          Verify that <code>findUserByEmail</code> still returns a document
+          containing <code>password_hash</code>, and that the login response
+          returns a string <code>id</code> plus email—not the hash.
+        </p>
+
+        <h3><span class="file">server/src/services/task.services.js</span></h3>
+        <p>
+          The service coordinates user checks and repository operations; it
+          does not directly use Sequelize. Its task and user IDs will now be
+          strings. Preserve every user ownership check, and ensure service
+          functions don't reject valid ObjectId strings merely because the old
+          integer code assumed numbers.
+        </p>
+
+        <h3><span class="file">server/src/controllers/task.controller.js</span></h3>
+        <p>
+          Controller calls can mostly remain because IDs arrive as strings in
+          route params and repositories now accept strings. Review the
+          not-found status: this project's current controller returns 401 for
+          missing/invalid task results. A more conventional distinction is
+          400 for malformed ID (handled by route validation) and 404 for a
+          valid ID that is missing or not owned by the current user. If changing
+          status codes, treat that as an intentional API behavior change and
+          test clients.
+        </p>
+
+        <h3><span class="file">server/src/middleware/authenticate.js</span></h3>
+        <p>
+          The middleware reads <code>req.session.userId</code> and calls
+          <code>findUserById</code>. Keep this flow. Because the session now
+          holds an ObjectId string, the repository should safely reject a
+          missing or malformed session ID and return no user; the middleware
+          can then respond as unauthenticated instead of allowing a Mongoose
+          cast error to become an HTTP 500.
+        </p>
+
+        <h3><span class="file">server/src/app.js</span> (optional session-store work)</h3>
+        <p>
+          Switching the user/task database does not automatically change
+          Express session storage. This file currently uses express-session's
+          default in-memory store. That is generally unsuitable for
+          production or multiple API instances because sessions disappear on
+          restart and are not shared.
+        </p>
+        <p>
+          If persistent sessions are needed, separately install and configure
+          a MongoDB-compatible store such as <code>connect-mongo</code> in
+          <code>app.js</code>. This is a separate production concern; do not
+          confuse it with replacing Sequelize models. Keep the session secret,
+          cookie protections, and current session behavior in place while
+          making that decision.
+        </p>
+      </section>
+
+      <section id="frontend-files">
+        <h2>9. Frontend files: change IDs from numbers to strings</h2>
+        <p>
+          If the API translates MongoDB <code>_id</code> into string
+          <code>id</code>, the existing endpoint URLs and JSON property names
+          can stay. TypeScript must reflect the new ID type so comparisons and
+          callback signatures stay correct.
+        </p>
+
+        <h3><span class="file">frontend/src/App.tsx</span></h3>
+        <p>
+          Change both task interfaces/types and every task ID parameter from
+          number to string:
+        </p>
+        <pre><code>export type Task = {
+  id: string;
+  title: string;
+  description: string;
+  completed: boolean;
+  image: string | null;
+};
+
+type ServerTask = {
+  id: string;
+  title: string;
+  description: string | null;
+  completed: boolean | 0 | 1;
+  image_url: string | null;
+};
+
+// For example, change function parameters such as:
+const deleteTask = async (id: string) =&gt; { /* existing request logic */ };
+const handleToggleComplete = async (id: string) =&gt; { /* existing request logic */ };</code></pre>
+        <p>
+          Also update <code>addTask</code>, <code>updateTask</code>, and any
+          callbacks that accept a task ID. Existing URL interpolation and
+          strict equality comparisons continue to work with strings, provided
+          the API always returns string IDs.
+        </p>
+
+        <h3><span class="file">frontend/src/components/TaskForm.tsx</span></h3>
+        <p>
+          Change the ID argument in <code>onAddTask</code> and
+          <code>onUpdateTask</code> to <code>string</code>. The edit URL already
+          interpolates the ID, and the create handler should pass the response's
+          string <code>result.task.id</code> to the parent.
+        </p>
+
+        <h3><span class="file">frontend/src/components/TaskItem.tsx</span> and <span class="file">frontend/src/components/TaskList.tsx</span></h3>
+        <p>
+          Change the <code>onDelete</code> and <code>onToggleComplete</code>
+          callback parameter types to <code>string</code>. React keys and HTML
+          IDs accept strings, so <code>key={task.id}</code> and
+          <code>taskStatus-${task.id}</code> need no structural rewrite.
+        </p>
+        <p>
+          Frontend signup/login forms and request paths do not otherwise need
+          database changes. Do not change the API's field name from
+          <code>image_url</code> unless you intentionally want a broader
+          request/response contract change.
+        </p>
+      </section>
+
+      <section id="migration-data">
+        <h2>10. Existing MySQL data requires a separate migration</h2>
+        <p>
+          Replacing the connection does <strong>not</strong> copy the MySQL
+          records into MongoDB. If there is data to keep, plan and verify a
+          separate export/import before pointing users at the new database.
+        </p>
+        <ol>
+          <li>Take and verify a restorable MySQL backup. Record counts of users and tasks.</li>
+          <li>Export the user and task rows and preserve a mapping from each old integer user ID to the new MongoDB ObjectId.</li>
+          <li>Insert users first. Preserve <code>password_hash</code> exactly so existing passwords still work; do not hash the hash again.</li>
+          <li>Insert tasks after rewriting each task's <code>user_id</code> using the saved old-ID-to-new-ID mapping.</li>
+          <li>Preserve timestamps, nullable values, completion booleans, and image URLs deliberately; check how the export format represents them.</li>
+          <li>Compare record counts, sample documents, email uniqueness, and task ownership. Run application tests against the imported database.</li>
+          <li>Choose a cutover/rollback window. Keep the old database and verified backup until MongoDB is proven correct.</li>
+        </ol>
+        <div class="callout warning">
+          <strong>Do not copy integer IDs into the ObjectId field.</strong>
+          MongoDB's ObjectId and the old SQL integer key are different ID
+          systems. The task-owner mapping is essential; without it, tasks can
+          become orphaned or attached to the wrong user.
+        </div>
+        <p>
+          Existing login sessions may need to be invalidated or users may need
+          to sign in again. A session that still contains an old numeric user
+          ID cannot identify the new MongoDB user unless a deliberate mapping
+          and compatibility plan is implemented.
+        </p>
+      </section>
+
+      <section id="sessions-security">
+        <h2>11. Security and operational considerations</h2>
+        <ul>
+          <li><strong>Neither stack is automatically more secure.</strong> Security depends on correct configuration, validation, authorization, secrets management, updates, and database access controls.</li>
+          <li><strong>Validate input.</strong> Validate request bodies and ObjectId route parameters. Never pass arbitrary client-provided query operators or filters directly into MongoDB.</li>
+          <li><strong>Keep authorization in database filters.</strong> Task update/delete filters should contain both <code>_id</code> and the signed-in <code>user_id</code>.</li>
+          <li><strong>Keep secrets private.</strong> Store production URIs/passwords outside source control. Restrict MongoDB network access and database user privileges.</li>
+          <li><strong>Protect account data.</strong> Never return <code>password_hash</code>. Continue bcrypt hashing and use TLS for hosted database connections as required by the provider.</li>
+          <li><strong>Plan indexes.</strong> Ensure unique email and task-owner indexes exist. A schema option alone should not be treated as proof that a production index was created.</li>
+          <li><strong>Observe failures.</strong> Database connection and unexpected query failures should be logged/reported; do not turn them into success-shaped responses.</li>
+          <li><strong>Back up and test restore.</strong> Backups are only useful if restoration has been tested.</li>
+        </ul>
+        <p>
+          MongoDB's flexible documents can be convenient, but relational
+          constraints, joins, and transactions may require different design
+          decisions. This app's user-to-task relationship is small and can be
+          modeled in MongoDB, but the migration is not automatically simpler
+          or safer than staying with MySQL.
+        </p>
+      </section>
+
+      <section id="test-plan">
+        <h2>12. Suggested implementation order and verification</h2>
+        <ol>
+          <li>Work on a branch; inventory current data and make a restorable MySQL backup.</li>
+          <li>Install Mongoose, set a local <code>MONGODB_URI</code>, and confirm startup fails clearly if the database is unavailable.</li>
+          <li>Implement schemas and repositories. Test unique email handling, public user fields, timestamps, sort order, and owner-scoped task operations.</li>
+          <li>Implement ObjectId route validation and string IDs. Check API responses still use <code>id</code> and never expose <code>_id</code> unless intended.</li>
+          <li>Update the frontend types, run its build/type-check, and verify task creation/edit/delete/toggle through the UI.</li>
+          <li>Test signup, login, logout, current-user endpoint, database health endpoint, malformed IDs, unknown IDs, and cross-user task access.</li>
+          <li>If importing existing data, compare counts and ownership and test using migrated accounts before cutover.</li>
+          <li>Update <code>DEPENDENCIES.md</code>, deployment environment variables, and operational/backup documentation; remove obsolete MySQL settings from active deployment configuration.</li>
+        </ol>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Check</th><th>Expected result</th></tr></thead>
+            <tbody>
+              <tr><td>API starts with an available MongoDB service and valid URI</td><td>Connection is awaited before the API begins listening.</td></tr>
+              <tr><td>API starts with a missing/bad URI or unavailable database</td><td>Startup failure is visible; the process does not report a healthy API.</td></tr>
+              <tr><td>Signup with a duplicate email</td><td>HTTP 409 with the existing duplicate-account message.</td></tr>
+              <tr><td>Task endpoints return IDs</td><td>JSON has a string <code>id</code>; frontend uses it without numeric conversion.</td></tr>
+              <tr><td>Malformed task ID in PUT/DELETE</td><td>HTTP 400 before a database cast error.</td></tr>
+              <tr><td>Valid but missing/other-user task ID</td><td>No unauthorized task data is read or changed; response follows the chosen 404 policy.</td></tr>
+              <tr><td>Task list for one user</td><td>Only that user's tasks are returned, newest first.</td></tr>
+              <tr><td>Public user response</td><td>Contains the intended user fields but never <code>password_hash</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          The key learning point is to preserve behavior at the boundaries:
+          services and controllers should continue to express the same app
+          rules, while repositories translate those rules into MongoDB
+          operations. Then deliberately update the boundaries where the
+          database type is visible—IDs, duplicate-key errors, timestamps,
+          environment settings, and operational health checks.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        Prepared as a project-specific explanation for the Todo List app. Code
+        samples are migration examples and should be adapted, reviewed, and
+        tested before use in a real deployment.
+      </p>
+    </footer>
+  </body>
+</html>
