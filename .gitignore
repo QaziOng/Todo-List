@@ -12,12 +12,9 @@ dist
 dist-ssr
 *.local
 /server/uploads/
-.env
-.env.*
 !.env.example
 
 # Editor directories and files
-.vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
@@ -32,3 +29,4 @@ temp_interactive_push.bat
 MIGRATING_TO_MONGODB.md
 MONGODB_MIGRATION_LEARNING_GUIDE.html
 IMAGE_UPLOAD_GUIDE.html
+config.bat
