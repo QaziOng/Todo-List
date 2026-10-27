@@ -30,7 +30,7 @@ Task.init(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
-    image_url: {
+    image_key: {
       type: DataTypes.STRING,
       allowNull: true,
     },

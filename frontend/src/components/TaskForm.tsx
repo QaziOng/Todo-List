@@ -15,7 +15,7 @@ type AddTaskProps = {
     title: string,
     description: string,
     completed: boolean,
-    image: string,
+    image: string | null,
   ) => void;
 
   visibility: () => void;
@@ -27,14 +27,14 @@ type TaskFormState = {
   title: string;
   description: string;
   completed: boolean;
-  image: string;
+  imageUrl: string;
 };
 
 const getFormValues = (task: Task | null): TaskFormState => ({
   title: task?.title ?? "",
   description: task?.description ?? "",
   completed: task?.completed ?? false,
-  image: task?.image ?? "",
+  imageUrl: "",
 });
 
 const TaskForm = ({
@@ -49,9 +49,11 @@ const TaskForm = ({
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
     setTasks(getFormValues(taskToEdit));
+    setSelectedFile(null);
     setError("");
     setMessage("");
   }, [taskToEdit]);
@@ -60,27 +62,42 @@ const TaskForm = ({
     e.preventDefault();
     setError("");
     setMessage("");
+
+    if (selectedFile && tasks.imageUrl.trim()) {
+      setError("Choose an image file or enter an image URL, not both.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     const payload = {
       title: tasks.title.trim(),
       description: tasks.description.trim(),
       completed: tasks.completed,
-      image_url: tasks.image.trim() || null,
     };
 
+    const body = new FormData();
+    body.append("title", payload.title);
+    body.append("description", payload.description);
+    body.append("completed", String(payload.completed));
+
+    if (selectedFile) {
+      body.append("image", selectedFile);
+    }
+    if (tasks.imageUrl.trim()) {
+      body.append("imageUrl", tasks.imageUrl.trim());
+    }
+
+    const taskEndpoint = taskToEdit
+      ? `http://localhost:3000/api/v1/tasks/${taskToEdit.id}`
+      : `http://localhost:3000/api/v1/tasks/create`;
+
     try {
-      const response = await fetch(
-        taskToEdit
-          ? `http://localhost:3000/api/v1/tasks/${taskToEdit.id}`
-          : `http://localhost:3000/api/v1/tasks/create`,
-        {
-          method: taskToEdit ? "PUT" : "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        },
-      );
+      const response = await fetch(taskEndpoint, {
+        method: taskToEdit ? "PUT" : "POST",
+        credentials: "include",
+        body,
+      });
 
       const result = await response.json();
 
@@ -88,13 +105,17 @@ const TaskForm = ({
         throw new Error(result.message ?? "Task creation failed!");
       }
 
+      const savedImage = result.task.image_key
+        ? `http://localhost:3000/uploads/${encodeURIComponent(result.task.image_key)}`
+        : null;
+
       if (taskToEdit) {
         onUpdateTask(
           taskToEdit.id,
           payload.title,
           payload.description,
           payload.completed,
-          payload.image_url ?? "",
+          savedImage,
         );
         setMessage("Task updated Successfully");
       } else {
@@ -103,9 +124,10 @@ const TaskForm = ({
           payload.title,
           payload.description,
           payload.completed,
-          payload.image_url ?? "",
+          savedImage,
         );
         setTasks(getFormValues(null));
+        setSelectedFile(null);
         setMessage("Task created successfully");
       }
       visibility();
@@ -161,16 +183,35 @@ const TaskForm = ({
         />
       </label>
       <label className="block text-sm font-semibold text-slate-300">
-        Image URL (optional)
+        Choose image file (optional)
+        <br />
+        <input
+          type="file"
+          className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          onChange={(event) => {
+            setSelectedFile(event.target.files?.[0] ?? null);
+          }}
+        />
+        <span className="mt-1 block text-xs font-normal text-slate-400">
+          JPEG, PNG, WebP or GIF; maximum size 8 MB.
+        </span>
+      </label>
+      <label className="block text-sm font-semibold text-slate-300">
+        Or import image from URL (optional)
         <input
           type="url"
           className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none transition placeholder:text-slate-500 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
           placeholder="https://example.com/image.jpg"
-          value={tasks.image}
-          onChange={(event) => {
-            setTasks({ ...tasks, image: event.target.value });
-          }}
+          value={tasks.imageUrl}
+          onChange={(event) =>
+            setTasks({ ...tasks, imageUrl: event.target.value })
+          }
         />
+        <span className="mt-1 block text-xs font-normal text-slate-400">
+          Select a file or enter an HTTP(S) URL, not both. Leaving both empty
+          keeps the current image when editing.
+        </span>
       </label>
 
       <Button

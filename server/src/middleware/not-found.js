@@ -1,4 +1,4 @@
-import { AppError } from "../utils/app-error.js";
+import AppError from "../utils/app-error.js";
 
 export default function notFound(req, res, next) {
   next(new AppError("Route not found", 404));

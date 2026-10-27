@@ -15,3 +15,28 @@ body {
   min-width: 320px;
   font-family: "DM Sans", sans-serif;
 }
+
+.task-scroll-area {
+  scrollbar-color: #94a3b8 transparent;
+  scrollbar-width: thin;
+}
+
+.task-scroll-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.task-scroll-area::-webkit-scrollbar-track,
+.task-scroll-area::-webkit-scrollbar-button {
+  background: transparent;
+}
+
+.task-scroll-area::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+.task-scroll-area::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: #94a3b8;
+}

@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+/server/uploads/
 .env
 .env.*
 !.env.example
@@ -30,3 +31,4 @@ temp_auto_push.bat
 temp_interactive_push.bat
 MIGRATING_TO_MONGODB.md
 MONGODB_MIGRATION_LEARNING_GUIDE.html
+IMAGE_UPLOAD_GUIDE.html

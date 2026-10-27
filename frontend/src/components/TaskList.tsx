@@ -33,8 +33,11 @@ const TaskList = ({
       ) : (
         <div className="space-y-4">
           <div className="flex items-center justify-between px-1">
-            <h2 className="font-serif text-3xl font-semibold text-slate-950">
-              Your tasks
+            <h2
+              id="task-list-heading"
+              className="font-serif text-3xl font-semibold text-slate-950"
+            >
+              Your Tasks
             </h2>
 
             <span className="text-sm font-semibold text-slate-500">
@@ -42,7 +45,12 @@ const TaskList = ({
             </span>
           </div>
 
-          <div className="space-y-3">
+          <div
+            aria-labelledby="task-list-heading"
+            className="task-scroll-area space-y-3 rounded-3xl border border-transparent bg-[#f5f7f2] p-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 lg:max-h-[calc(100vh-22rem)] lg:overflow-y-auto lg:overscroll-contain lg:p-4 lg:pr-3"
+            role="region"
+            tabIndex={0}
+          >
             {tasks.map((task) => (
               <TaskItem
                 key={task.id}

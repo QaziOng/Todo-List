@@ -5,6 +5,9 @@ import healthRoutes from "./routes/health.routes.js";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import routes from "./routes/index.routes.js";
+import { uploadDirectory } from "./middleware/upload.js";
+import notFound from "./middleware/not-found.js";
+import errorHandler from "./middleware/error-handler.js";
 
 const app = express();
 
@@ -45,5 +48,12 @@ app.use(
 
 app.use("/api/health", healthRoutes);
 app.use("/api/v1", apiLimiter, routes);
+app.use(
+  "/uploads",
+  helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }),
+  express.static(uploadDirectory, { index: false, dotfiles: "deny" }),
+);
+app.use(notFound);
+app.use(errorHandler);
 
 export default app;

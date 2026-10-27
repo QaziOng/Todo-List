@@ -13,8 +13,22 @@ export async function getTasksByUserId(user_id) {
   return await TaskRepo.findTasksByUserId(user_id);
 }
 
+export async function getTaskById(id, user_id) {
+  return TaskRepo.findTaskById(id, user_id);
+}
+
+export async function isImageKeyUsed(image_key) {
+  return (await TaskRepo.countTasksByImageKey(image_key)) > 0;
+}
+
 // Create Task by UserID
-export async function createTaskById(user_id, title, description, image_url) {
+export async function createTaskById(
+  user_id,
+  title,
+  description,
+  image_key,
+  completed = false,
+) {
   if (!user_id || !title) {
     return null;
   }
@@ -29,7 +43,8 @@ export async function createTaskById(user_id, title, description, image_url) {
     user_id,
     title,
     description,
-    image_url,
+    image_key,
+    completed,
   });
 
   return newTask;
@@ -41,7 +56,7 @@ export async function updateTaskById(
   user_id,
   title,
   description,
-  image_url,
+  image_key,
   completed,
 ) {
   if (!id || !user_id || !title) {
@@ -59,7 +74,7 @@ export async function updateTaskById(
     user_id,
     title,
     description,
-    image_url,
+    image_key,
     completed,
   });
 

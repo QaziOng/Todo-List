@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import TaskForm from "./components/TaskForm.tsx";
 import TaskList from "./components/TaskList.tsx";
 import Button from "./components/Button.tsx";
@@ -18,19 +18,36 @@ type ServerTask = {
   title: string;
   description: string | null;
   completed: boolean | 0 | 1;
-  image_url: string | null;
+  image_key: string | null;
 };
 
 type screen = "login" | "signup" | "tasks" | "checking" | "check-error";
+
+const imageUrlFor = (imageKey: string | null) =>
+  imageKey
+    ? `http://localhost:3000/uploads/${encodeURIComponent(imageKey)}`
+    : null;
 
 const App = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [visibility, setVisibility] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const taskDialogRef = useRef<HTMLDialogElement>(null);
   const [screen, setScreen] = useState<screen>("checking");
   const [authCheckError, setAuthCheckError] = useState("");
   const [logoutError, setLogoutError] = useState("");
   const [taskError, setTaskError] = useState("");
+
+  useEffect(() => {
+    const dialog = taskDialogRef.current;
+    if (!dialog) return;
+
+    if (visibility && !dialog.open) {
+      dialog.showModal();
+    } else if (!visibility && dialog.open) {
+      dialog.close();
+    }
+  }, [visibility]);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,7 +109,7 @@ const App = () => {
             title: task.title,
             description: task.description ?? "",
             completed: Boolean(task.completed),
-            image: task.image_url,
+            image: imageUrlFor(task.image_key),
           })),
         );
       } catch (err) {
@@ -134,12 +151,22 @@ const App = () => {
     setVisibility(true);
   };
 
+  const handleCreate = () => {
+    setEditingTask(null);
+    setVisibility(true);
+  };
+
+  const handleCloseTaskDialog = () => {
+    setVisibility(false);
+    setEditingTask(null);
+  };
+
   const updateTask = (
     id: number,
     title: string,
     description: string,
     completed: boolean,
-    image: string,
+    image: string | null,
   ) => {
     setTasks((previousTask) =>
       previousTask.map((task) =>
@@ -177,7 +204,6 @@ const App = () => {
           title: task.title,
           description: task.description,
           completed,
-          image_url: task.image,
         }),
       });
       const result = await response.json();
@@ -303,7 +329,7 @@ const App = () => {
             </div>
             <Button
               className="bg-teal-700 text-white shadow-lg shadow-teal-700/20 hover:bg-teal-800"
-              onClick={() => setVisibility(true)}
+              onClick={handleCreate}
             >
               + New task
             </Button>
@@ -331,7 +357,7 @@ const App = () => {
           </p>
         )}
 
-        <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <section className="grid gap-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,1fr)]">
           <TaskList
             tasks={tasks}
             onDelete={deleteTask}
@@ -339,60 +365,66 @@ const App = () => {
             onToggleComplete={handleToggleComplete}
           />
 
-          {visibility ? (
-            <aside className="h-fit rounded-3xl bg-slate-950 p-6 text-white shadow-xl shadow-slate-900/10 lg:order-first">
-              <div className="mb-6 flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-wider text-amber-400">
-                    New focus
-                  </p>
-                  <h2 className="mt-1 font-serif text-3xl font-semibold">
-                    {editingTask ? "Edit task" : "Add a task"}
-                  </h2>
-                </div>
-                <button
-                  type="button"
-                  aria-label="Close task form"
-                  className="text-2xl leading-none text-slate-400 transition hover:text-white"
-                  onClick={() => {
-                    setVisibility(false);
-                    setEditingTask(null);
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-              <TaskForm
-                onAddTask={addTask}
-                onUpdateTask={updateTask}
-                taskToEdit={editingTask}
-                visibility={() => {
-                  setVisibility(false);
-                  setEditingTask(null);
-                }}
-              />
-            </aside>
-          ) : (
-            <aside className="h-fit rounded-3xl border border-amber-200 bg-amber-50 p-6 lg:order-first">
-              <p className="text-sm font-bold uppercase tracking-wider text-amber-700">
-                A gentle nudge
-              </p>
-              <h2 className="mt-2 font-serif text-3xl font-semibold text-slate-950">
-                What deserves your attention?
-              </h2>
-              <p className="mt-3 leading-7 text-slate-600">
-                Turn a thought into a next step and give it a place on your
-                list.
-              </p>
-              <Button
-                className="mt-6 w-full bg-amber-500 text-slate-950 hover:bg-amber-400"
-                onClick={() => setVisibility(true)}
-              >
-                Create a task
-              </Button>
-            </aside>
-          )}
+          <aside className="h-fit rounded-3xl border border-amber-200 bg-amber-50 p-6">
+            <p className="text-sm font-bold uppercase tracking-wider text-amber-700">
+              A gentle nudge
+            </p>
+            <h2 className="mt-2 font-serif text-3xl font-semibold text-slate-950">
+              What deserves your attention?
+            </h2>
+            <p className="mt-3 leading-7 text-slate-600">
+              Turn a thought into a next step and give it a place on your list.
+            </p>
+            <Button
+              className="mt-6 w-full bg-amber-500 text-slate-950 hover:bg-amber-400"
+              onClick={handleCreate}
+            >
+              Create a task
+            </Button>
+          </aside>
         </section>
+
+        <dialog
+          aria-labelledby="task-dialog-title"
+          className="m-auto max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl overflow-y-auto rounded-3xl border border-slate-700 bg-slate-950 p-6 text-white shadow-2xl backdrop:bg-slate-950/60"
+          onClose={handleCloseTaskDialog}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              taskDialogRef.current?.close();
+            }
+          }}
+          ref={taskDialogRef}
+        >
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wider text-amber-400">
+                New focus
+              </p>
+              <h2
+                className="mt-1 font-serif text-3xl font-semibold"
+                id="task-dialog-title"
+              >
+                {editingTask ? "Edit task" : "Add a task"}
+              </h2>
+            </div>
+            <button
+              type="button"
+              aria-label="Close task form"
+              className="text-2xl leading-none text-slate-400 transition hover:text-white"
+              onClick={handleCloseTaskDialog}
+            >
+              ×
+            </button>
+          </div>
+          {visibility && (
+            <TaskForm
+              onAddTask={addTask}
+              onUpdateTask={updateTask}
+              taskToEdit={editingTask}
+              visibility={handleCloseTaskDialog}
+            />
+          )}
+        </dialog>
       </div>
     </main>
   );
