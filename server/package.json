@@ -4,8 +4,8 @@
   "description": "Express API for the Task App",
   "main": "src/server.js",
   "scripts": {
-    "dev": "node --watch src/server.js",
-    "start": "node src/server.js",
+    "dev": "node init && node --watch src/server.js",
+    "start": "node init && node src/server.js",
     "seed": "node src/seed.js"
   },
   "keywords": [],

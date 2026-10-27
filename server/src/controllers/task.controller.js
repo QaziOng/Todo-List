@@ -30,7 +30,10 @@ async function discardImageIfUnused(filename) {
       await discardImage(filename);
     }
   } catch (error) {
-    console.error("Could not check whether an image is still referenced", error);
+    console.error(
+      "Could not check whether an image is still referenced",
+      error,
+    );
   }
 }
 
